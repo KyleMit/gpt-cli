@@ -1,25 +1,33 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { createInterface } from 'readline';
+import { stdin , stdout } from 'process';
+import { promises as fs } from "fs"
 import { Configuration, OpenAIApi } from "openai";
 import * as dotenv from 'dotenv'
-import { promises as fs } from "fs"
 
+const apiKeyName = "OPENAI_API_KEY"
+const apiKeyUrl = "https://beta.openai.com/account/api-keys"
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+main()
 
 async function main() {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
+
     dotenv.config({ path: `${__dirname}/.env` });
 
-    if (!process.env.OPENAI_API_KEY) {
-        console.log("OPENAI_API_KEY env variable is not set")
-        return
+    let apiKey = process.env[apiKeyName]
+
+    if (!apiKey) {
+        apiKey = await promptAndSaveKey(Boolean(apiKey))
     }
 
-    const [,, ...args] = process.argv
+    const args = process.argv.slice(2)
     
     const configuration = new Configuration({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: apiKey,
     });
 
     const openai = new OpenAIApi(configuration);
@@ -47,9 +55,26 @@ async function main() {
         fs.appendFile(logName, logEntry)
 
     } catch (error) {
-        console.log(error)
+        if (error.response.status == 401) {
+            promptAndSaveKey(true)
+        } else {
+            console.log(error)
+        }
     }
     
 }
 
-main()
+async function promptAndSaveKey(keySet) {    
+    const promptDesc = !keySet ? "not set" : "incorrect"
+    console.log(`${apiKeyName} env variable is ${promptDesc} - generate from ${apiKeyUrl}`)
+
+    const rl = createInterface({ input: stdin, output: stdout });
+    const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
+    const apiKey = await prompt('Enter your API Key: ');
+    rl.close();
+
+    const secrets = `${apiKeyName}=${apiKey}`
+    fs.writeFile(`${__dirname}/.env`, secrets, { encoding: 'utf-8' })
+    
+    return apiKey
+}

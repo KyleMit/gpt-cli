@@ -17,8 +17,8 @@ Logs are stored to a local `logs.json` file to help you debug info from the resp
 
 ## Todo
 
-* [ ] Login if auth not found
 * [ ] Params as config file
+* [ ] Use conversation
 
 ## Prior Art
 

@@ -2,10 +2,12 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { createInterface } from 'readline';
-import { stdin , stdout } from 'process';
+import { stdin , stdout, platform, env, argv  } from 'process';
 import { promises as fs } from "fs"
+import cp from 'child_process'
 import { Configuration, OpenAIApi } from "openai";
 import * as dotenv from 'dotenv'
+
 
 const apiKeyName = "OPENAI_API_KEY"
 const apiKeyUrl = "https://beta.openai.com/account/api-keys"
@@ -18,13 +20,13 @@ async function main() {
 
     dotenv.config({ path: `${__dirname}/.env` });
 
-    let apiKey = process.env[apiKeyName]
+    let apiKey = env[apiKeyName]
 
     if (!apiKey) {
         apiKey = await promptAndSaveKey(Boolean(apiKey))
     }
 
-    const args = process.argv.slice(2)
+    const args = argv.slice(2)
     
     const configuration = new Configuration({
         apiKey: apiKey,
@@ -42,17 +44,12 @@ async function main() {
             max_tokens: 40
         });
     
-        const choice = completion.data.choices[0]
-        const response = choice.text
-        const suffix = choice.finish_reason == "length" ? "..." : ""
-        const result = response.replace(/^(\?|any)/, "").trim() + suffix
+        const result = parseResult(completion)
     
         console.log(result)
-    
-        const logName = `${__dirname}/log.json`
-        const logData = { prompt, ...completion.data }
-        const logEntry = JSON.stringify(logData, null, 4) + ',\n'
-        fs.appendFile(logName, logEntry)
+
+        appendLogData(prompt, completion.data)
+        
 
     } catch (error) {
         if (error.response.status == 401) {
@@ -70,6 +67,10 @@ async function promptAndSaveKey(keySet) {
 
     const rl = createInterface({ input: stdin, output: stdout });
     const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
+
+    await prompt("Press any key to open api key url... ")
+    openUrl(apiKeyUrl)
+
     const apiKey = await prompt('Enter your API Key: ');
     rl.close();
 
@@ -77,4 +78,25 @@ async function promptAndSaveKey(keySet) {
     fs.writeFile(`${__dirname}/.env`, secrets, { encoding: 'utf-8' })
     
     return apiKey
+}
+
+function openUrl(url) {
+    var start = platform == 'darwin' ? 'open'
+            : platform == 'win32' ? 'start'
+            : 'xdg-open';
+    cp.exec(start + ' ' + url);
+}
+
+function parseResult(completion) {
+    const choice = completion.data.choices[0]
+    const response = choice.text
+    const suffix = choice.finish_reason == "length" ? "..." : ""
+    return response.replace(/^(\?|any)/, "").trim() + suffix
+}
+
+async function appendLogData(prompt, response) {
+    const logName = `${__dirname}/log.json`
+    const logData = { prompt, ...response }
+    const logEntry = JSON.stringify(logData, null, 4) + ',\n'
+    fs.appendFile(logName, logEntry)
 }

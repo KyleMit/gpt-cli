@@ -19,6 +19,7 @@ Logs are stored to a local `logs.json` file to help you debug info from the resp
 
 * [ ] Params as config file
 * [ ] Use conversation
+* [ ] Zero dependency - use native fetch
 
 ## Prior Art
 

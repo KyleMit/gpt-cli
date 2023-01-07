@@ -25,9 +25,8 @@ async function main() {
     if (!apiKey) {
         apiKey = await promptAndSaveKey(Boolean(apiKey))
     }
-    if (!apiKey) {
-        return
-    }
+    if (!apiKey) { return }
+
     const args = argv.slice(2)
     
     const configuration = new Configuration({
@@ -42,12 +41,17 @@ async function main() {
         openConfig()
         return
     }
+    if (prompt == "auth") {
+        await promptAndSaveKey(false)
+        return
+    }
 
     try {
         const options = {
             ...config,
             prompt,
         }
+
         const completion = await openai.createCompletion(options);
     
         const result = parseResult(completion)
@@ -56,32 +60,34 @@ async function main() {
 
         appendLogData(prompt, completion.data)
         
-
     } catch (error) {
         if (error.response.status == 401) {
             promptAndSaveKey(true)
         } else {
             console.log(error)
         }
-    }
-    
+    }  
 }
 
 async function promptAndSaveKey(keySet) {    
     const promptDesc = !keySet ? "not set" : "incorrect"
-    console.log(`${apiKeyName} env variable is ${promptDesc} - generate from ${apiKeyUrl}`)
+    console.info(`${apiKeyName} env variable is ${promptDesc}`)
 
     const rl = createInterface({ input: stdin, output: stdout });
     const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
-
-    await prompt("Press any key to open api key url... ")
-    openUrl(apiKeyUrl)
+    
+    const openDocsResp = await prompt(`Open ${apiKeyUrl} (y/N)? `)
+    if (openDocsResp.toLowerCase() == "y") {
+        openUrl(apiKeyUrl)
+    }
 
     const apiKey = await prompt('Enter your API Key: ');
     rl.close();
 
+    if (!apiKey) { return }
+
     const secrets = `${apiKeyName}=${apiKey}`
-    fs.writeFile(`${__dirname}/.env`, secrets, { encoding: 'utf-8' })
+    fs.writeFile(`${__dirname}/.env`, secrets, "utf8")
     
     return apiKey
 }
@@ -101,10 +107,24 @@ function parseResult(completion) {
 }
 
 async function appendLogData(prompt, response) {
-    const logName = `${__dirname}/log.json`
+    const logPath = `${__dirname}/log.json`
+    const curLogsObj = await getLogData(logPath)
+    
     const logData = { prompt, ...response }
-    const logEntry = JSON.stringify(logData, null, 4) + ',\n'
-    fs.appendFile(logName, logEntry)
+    const newLogs = [...curLogsObj, logData]
+    const logEntry = JSON.stringify(newLogs, null, 4) + '\n'
+
+    await fs.writeFile(logPath, logEntry, "utf8")
+}
+
+async function getLogData(path) {
+    try {
+        const contents = await fs.readFile(logPath, "utf8")
+        return JSON.parse(curLogsFile)
+    } catch (error) {
+        // file probably doesn't exist, just return empty array
+        return []
+    }
 }
 
 function openConfig() {

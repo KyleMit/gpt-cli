@@ -7,16 +7,24 @@ Snowflakes falling from the sky
 Peaceful serenity
 ```
 
-## Input
+## Commands
 
-To customize output, run:
 
 ```bash
+# enter auth key
+gpt auth
+
+# customize config
 gpt config
+
+# ask question
+gpt <your question here>
 ```
 
+> **Note**
+> Be careful with apostrophe's in your question, as they'll likely be interpreted to your shell as string delimiters
 
-Will auto prompt to enter [API Key](https://beta.openai.com/account/api-keys) if not found in `.env` file
+You'll need to create and enter your own [API Key](https://beta.openai.com/account/api-keys)
 
 
 ## Logs

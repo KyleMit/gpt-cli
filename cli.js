@@ -11,8 +11,7 @@ import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
 const apiKeyUrl = "https://beta.openai.com/account/api-keys"
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = getDirname()
 
 main()
 
@@ -64,9 +63,14 @@ async function main() {
         if (error.response.status == 401) {
             promptAndSaveKey(true)
         } else {
-            console.log(error)
+            logError(error)
         }
     }  
+}
+
+function getDirname() {
+    const filename = fileURLToPath(import.meta.url);
+    return dirname(filename);
 }
 
 async function promptAndSaveKey(keySet) {    
@@ -108,7 +112,7 @@ function parseResult(completion) {
 
 async function appendLogData(prompt, response) {
     const logPath = `${__dirname}/log.json`
-    
+
     const curLogs = await getLogData(logPath)
     const newLog = { prompt, ...response }
     const newLogs = [...curLogs, newLog]
@@ -130,4 +134,12 @@ async function getLogData(path) {
 function openConfig() {
     const configFile = `${__dirname}/config.json`
     cp.exec(`code ${configFile}`);
+}
+
+function logError(error) {
+    const text = error?.response?.statusText || "unknown"
+    const errorFilePath = `${__dirname}/error.txt`
+    fs.appendFile(errorFilePath, JSON.stringify(error, null, 2) + "\n\n\n")
+    console.log(`Encountered '${text}' error`)
+    console.log(`View full error log details at ${errorFilePath}`)
 }

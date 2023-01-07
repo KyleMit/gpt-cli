@@ -1,4 +1,4 @@
-# OpenAI CLI
+# GPT CLI
 
 ```bash
 $ gpt write a haiku about winter
@@ -14,3 +14,15 @@ Follow instructions in [quickstart docs](https://beta.openai.com/docs/quickstart
 ## Logs
 
 Logs are stored to a local `logs.json` file to help you debug info from the response that is not displayed on screen
+
+## Todo
+
+* [ ] Login if auth not found
+* [ ] Params as config file
+
+## Prior Art
+
+* [ohall/gpt](https://github.com/ohall/gpt)
+* [mirnes-cajlakovic/openai-node-cli](https://github.com/mirnes-cajlakovic/openai-node-cli)
+* [diciaup/assistant-cli](https://github.com/diciaup/assistant-cli)
+* [openai-cli](https://www.npmjs.com/package/openai-cli)

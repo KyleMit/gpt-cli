@@ -35,6 +35,7 @@ Logs are stored to a local `logs.json` file to help you debug info from the resp
 
 * [ ] Use conversation
 * [ ] Zero dependency - use native fetch
+* [ ] Timer for long responses - or loading spinner
 
 ## Prior Art
 

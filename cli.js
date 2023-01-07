@@ -108,19 +108,19 @@ function parseResult(completion) {
 
 async function appendLogData(prompt, response) {
     const logPath = `${__dirname}/log.json`
-    const curLogsObj = await getLogData(logPath)
     
-    const logData = { prompt, ...response }
-    const newLogs = [...curLogsObj, logData]
-    const logEntry = JSON.stringify(newLogs, null, 4) + '\n'
-
-    await fs.writeFile(logPath, logEntry, "utf8")
+    const curLogs = await getLogData(logPath)
+    const newLog = { prompt, ...response }
+    const newLogs = [...curLogs, newLog]
+    
+    const logContent = JSON.stringify(newLogs, null, 4) + '\n'
+    await fs.writeFile(logPath, logContent, "utf8")
 }
 
 async function getLogData(path) {
     try {
-        const contents = await fs.readFile(logPath, "utf8")
-        return JSON.parse(curLogsFile)
+        const contents = await fs.readFile(path, "utf8")
+        return JSON.parse(contents)
     } catch (error) {
         // file probably doesn't exist, just return empty array
         return []

@@ -1,0 +1,21 @@
+{
+  "name": "open-ai-cli",
+  "version": "1.0.0",
+  "description": "CLI chatbot using open ai API",
+  "type": "module",
+  "scripts": {},
+  "bin": {
+    "gpt": "./cli.js"
+  },
+  "keywords": [
+    "openai",
+    "chat-gpt",
+    "cli"
+  ],
+  "author": "KyleMit",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "openai": "^3.1.0"
+  }
+}

@@ -7,7 +7,7 @@ import { promises as fs } from "fs"
 import cp from 'child_process'
 import { Configuration, OpenAIApi } from "openai";
 import * as dotenv from 'dotenv'
-
+import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
 const apiKeyUrl = "https://beta.openai.com/account/api-keys"
@@ -25,7 +25,9 @@ async function main() {
     if (!apiKey) {
         apiKey = await promptAndSaveKey(Boolean(apiKey))
     }
-
+    if (!apiKey) {
+        return
+    }
     const args = argv.slice(2)
     
     const configuration = new Configuration({
@@ -36,13 +38,17 @@ async function main() {
     
     const prompt = args.join(" ")
 
+    if (prompt == "config") {
+        openConfig()
+        return
+    }
+
     try {
-        const completion = await openai.createCompletion({
-            model: "text-davinci-003",
-            prompt: prompt,
-            temperature: 0.6,
-            max_tokens: 40
-        });
+        const options = {
+            ...config,
+            prompt,
+        }
+        const completion = await openai.createCompletion(options);
     
         const result = parseResult(completion)
     
@@ -84,7 +90,7 @@ function openUrl(url) {
     var start = platform == 'darwin' ? 'open'
             : platform == 'win32' ? 'start'
             : 'xdg-open';
-    cp.exec(start + ' ' + url);
+    cp.exec(`${start} ${url}`);
 }
 
 function parseResult(completion) {
@@ -99,4 +105,9 @@ async function appendLogData(prompt, response) {
     const logData = { prompt, ...response }
     const logEntry = JSON.stringify(logData, null, 4) + ',\n'
     fs.appendFile(logName, logEntry)
+}
+
+function openConfig() {
+    const configFile = `${__dirname}/config.json`
+    cp.exec(`code ${configFile}`);
 }

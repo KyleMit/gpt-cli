@@ -1,7 +1,7 @@
 {
   "name": "open-ai-cli",
   "version": "1.0.0",
-  "description": "CLI chatbot using open ai API",
+  "description": "CLI chatbot using openai API",
   "type": "module",
   "scripts": {},
   "bin": {

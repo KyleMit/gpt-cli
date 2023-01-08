@@ -44,6 +44,8 @@ async function main() {
         await promptAndSaveKey(false)
         return
     }
+    
+    const spinner = consoleSpinner();
 
     try {
         const options = {
@@ -51,8 +53,10 @@ async function main() {
             prompt,
         }
 
+        spinner.start()
         const completion = await openai.createCompletion(options);
-    
+        spinner.stop()
+
         const result = parseResult(completion)
     
         console.log(result)
@@ -60,6 +64,7 @@ async function main() {
         appendLogData(prompt, completion.data)
         
     } catch (error) {
+        spinner.stop()
         if (error.response.status == 401) {
             promptAndSaveKey(true)
         } else {
@@ -142,4 +147,32 @@ function logError(error) {
     fs.appendFile(errorFilePath, JSON.stringify(error, null, 2) + "\n\n\n")
     console.log(`Encountered '${text}' error`)
     console.log(`View full error log details at ${errorFilePath}`)
+}
+
+
+function consoleSpinner() {
+    const characters = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    const cursorEsc = {
+        hide: '\u001B[?25l',
+        show: '\u001B[?25h',
+    }
+    stdout.write(cursorEsc.hide)
+
+    let timer;
+
+    const start = () => {
+        let i = 0;
+        timer = setInterval(function () {
+            stdout.write("\r" + characters[i++]);
+            i = i >= characters.length ? 0 : i;
+        }, 150);
+    }
+
+    const stop = () => {
+        clearInterval(timer)
+        stdout.write("\r")
+        stdout.write(cursorEsc.show)
+    }
+
+    return {start, stop}
 }

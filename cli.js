@@ -102,10 +102,15 @@ async function promptAndSaveKey(keySet) {
 }
 
 function openUrl(url) {
-    var start = platform == 'darwin' ? 'open'
-            : platform == 'win32' ? 'start'
-            : 'xdg-open';
-    cp.exec(`${start} ${url}`);
+    cp.exec(`${platformStartCommand()} ${url}`);
+}
+
+function platformStartCommand() {
+    switch (platform) {
+        case 'darwin': return 'open'
+        case 'win32': return 'start'
+        default: return 'xdg-open'
+    }
 }
 
 function parseResult(completion) {

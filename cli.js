@@ -25,18 +25,16 @@ async function main() {
     const args = argv.slice(2)
     const prompt = args.join(" ")
 
-    if (prompt == "") {
-        // TODO: help text
-        return
-    }
-
-    if (prompt == "config") {
-        openConfig()
-        return
-    }
-    if (prompt == "auth") {
-        await promptAndSaveKey(false)
-        return
+    switch (prompt) {
+        case '':
+            console.log("After typing 'gpt' ask a question or request")
+            return
+        case 'config': 
+            openConfig()
+            return
+        case 'auth':
+            await promptAndSaveKey(false)
+            return
     }
     
     if (!apiKey) {

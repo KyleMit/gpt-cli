@@ -44,7 +44,6 @@ Logs are stored to a local `logs.json` file to help you debug info from the resp
 
 * [ ] Use conversation
 * [ ] Timer for long responses or color spinner
-* [ ] Provide help text if nothing entered
 
 ## Prior Art
 

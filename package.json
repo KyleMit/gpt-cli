@@ -16,8 +16,5 @@
     "node": ">=18.0.0"
   },
   "author": "KyleMit",
-  "license": "MIT",
-  "dependencies": {
-    "dotenv": "^16.0.3"
-  }
+  "license": "MIT"
 }

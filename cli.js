@@ -5,7 +5,6 @@ import { createInterface } from 'readline';
 import process, { stdin , stdout, platform, env, argv, versions } from 'process';
 import { promises as fs } from "fs"
 import cp from 'child_process'
-import * as dotenv from 'dotenv'
 import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
@@ -21,12 +20,15 @@ main()
 
 async function main() {
 
-    dotenv.config({ path: `${__dirname}/.env` });
-
-    let apiKey = env[apiKeyName]
+    let apiKey = await getApiKey()
 
     const args = argv.slice(2)
     const prompt = args.join(" ")
+
+    if (prompt == "") {
+        // TODO: help text
+        return
+    }
 
     if (prompt == "config") {
         openConfig()
@@ -59,6 +61,18 @@ async function main() {
 function getDirname() {
     const filename = fileURLToPath(import.meta.url);
     return dirname(filename);
+}
+
+async function getApiKey() {
+    try {
+        const envFile = await fs.readFile(`${__dirname}/.env`, "utf8")
+        const regex = new RegExp(`${apiKeyName}=(.+)`)
+        const match = regex.exec(envFile)
+        const apiKey = match?.[1]
+        return apiKey
+    } catch (error) {
+        return null
+    }
 }
 
 async function promptAndSaveKey(keySet) {    

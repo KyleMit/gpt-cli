@@ -2,23 +2,24 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { createInterface } from 'readline';
-import process, { stdin , stdout, platform, env, argv, versions } from 'process';
+import process, { stdin , stdout, platform, argv, versions } from 'process';
 import { promises as fs } from "fs"
 import cp from 'child_process'
+
 import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
 const apiKeyUrl = "https://beta.openai.com/account/api-keys"
 const __dirname = getDirname()
 
-if (parseFloat(versions.node) < 18 ){
-    console.log('Node 18+ required for native fetch.');
-    process.exit(1);
-}
-
 main()
 
 async function main() {
+
+    if (parseFloat(versions.node) < 18 ){
+        console.log('Node 18+ required for native fetch.');
+        process.exit(1);
+    }
 
     let apiKey = await getApiKey()
 
@@ -157,7 +158,7 @@ function parseResult(data) {
     const choice = data.choices[0]
     const response = choice.text
     const suffix = choice.finish_reason == "length" ? "..." : ""
-    return response.replace(/^(\?|any)/, "").trim() + suffix
+    return response.replace(/^(\?|any|,)/, "").trim() + suffix
 }
 
 async function appendLogData(prompt, response) {
@@ -182,7 +183,7 @@ async function getLogData(path) {
 }
 
 function openConfig() {
-    const configFile = `${__dirname}/config.json`
+    const configFile = `${__dirname}/config.js`
     cp.exec(`code ${configFile}`);
 }
 

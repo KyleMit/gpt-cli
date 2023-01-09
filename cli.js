@@ -2,16 +2,20 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { createInterface } from 'readline';
-import { stdin , stdout, platform, env, argv  } from 'process';
+import process, { stdin , stdout, platform, env, argv, versions } from 'process';
 import { promises as fs } from "fs"
 import cp from 'child_process'
-import { Configuration, OpenAIApi } from "openai";
 import * as dotenv from 'dotenv'
 import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
 const apiKeyUrl = "https://beta.openai.com/account/api-keys"
 const __dirname = getDirname()
+
+if (parseFloat(versions.node) < 18 ){
+    console.log('Node 18+ required for native fetch.');
+    process.exit(1);
+}
 
 main()
 
@@ -21,19 +25,7 @@ async function main() {
 
     let apiKey = env[apiKeyName]
 
-    if (!apiKey) {
-        apiKey = await promptAndSaveKey(Boolean(apiKey))
-    }
-    if (!apiKey) { return }
-
     const args = argv.slice(2)
-    
-    const configuration = new Configuration({
-        apiKey: apiKey,
-    });
-
-    const openai = new OpenAIApi(configuration);
-    
     const prompt = args.join(" ")
 
     if (prompt == "config") {
@@ -45,32 +37,23 @@ async function main() {
         return
     }
     
-    const spinner = consoleSpinner();
+    if (!apiKey) {
+        apiKey = await promptAndSaveKey(Boolean(apiKey))
+        if (!apiKey) { return }
+    }
 
-    try {
-        const options = {
-            ...config,
-            prompt,
-        }
+    const options = {
+        ...config,
+        prompt,
+    }
 
-        spinner.start()
-        const completion = await openai.createCompletion(options);
-        spinner.stop()
+    const response = await sendCompletionRequest(apiKey, options);
+    const result = parseResult(response)
 
-        const result = parseResult(completion)
-    
-        console.log(result)
+    // output to user
+    console.log(result)
 
-        appendLogData(prompt, completion.data)
-        
-    } catch (error) {
-        spinner.stop()
-        if (error.response.status == 401) {
-            promptAndSaveKey(true)
-        } else {
-            logError(error)
-        }
-    }  
+    appendLogData(prompt, response)
 }
 
 function getDirname() {
@@ -82,23 +65,30 @@ async function promptAndSaveKey(keySet) {
     const promptDesc = !keySet ? "not set" : "incorrect"
     console.info(`${apiKeyName} env variable is ${promptDesc}`)
 
-    const rl = createInterface({ input: stdin, output: stdout });
-    const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
-    
+    const {rl, prompt} = createUserPrompt()
+
     const openDocsResp = await prompt(`Open ${apiKeyUrl} (y/N)? `)
     if (openDocsResp.toLowerCase() == "y") {
         openUrl(apiKeyUrl)
     }
 
     const apiKey = await prompt('Enter your API Key: ');
+
+    console.log("got" + apiKey)
     rl.close();
 
     if (!apiKey) { return }
 
     const secrets = `${apiKeyName}=${apiKey}`
-    fs.writeFile(`${__dirname}/.env`, secrets, "utf8")
+    await fs.writeFile(`${__dirname}/.env`, secrets, "utf8")
     
     return apiKey
+}
+
+function createUserPrompt() {
+    const rl = createInterface({ input: stdin, output: stdout });
+    const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
+    return {rl, prompt}
 }
 
 function openUrl(url) {
@@ -113,8 +103,46 @@ function platformStartCommand() {
     }
 }
 
-function parseResult(completion) {
-    const choice = completion.data.choices[0]
+async function sendCompletionRequest(apiKey, config) {
+    const spinner = consoleSpinner();
+
+    spinner.start()
+    const { resp, data} = await openaiApiCompletions(apiKey, config)
+    spinner.stop()
+
+    if (resp.status != 200) {
+        if (resp.status == 401) {
+            await promptAndSaveKey(true)
+        } else {
+            await logFailedRequest(config, resp, data)
+        }
+        process.exit(1);
+    }
+
+    return data
+}
+
+async function openaiApiCompletions(apiKey, config) {
+    const url = "https://api.openai.com/v1/completions"
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+    };
+    const method = 'POST';
+    const body = JSON.stringify(config);
+
+    const response = await fetch(url, { headers, method, body })
+
+    const { status, statusText } = response
+    const resp = { status, statusText }
+
+    const data = await response.json();
+
+    return { resp, data}
+}
+
+function parseResult(data) {
+    const choice = data.choices[0]
     const response = choice.text
     const suffix = choice.finish_reason == "length" ? "..." : ""
     return response.replace(/^(\?|any)/, "").trim() + suffix
@@ -146,14 +174,18 @@ function openConfig() {
     cp.exec(`code ${configFile}`);
 }
 
-function logError(error) {
-    const text = error?.response?.statusText || "unknown"
+async function logFailedRequest(config, resp, data) {
     const errorFilePath = `${__dirname}/error.txt`
-    fs.appendFile(errorFilePath, JSON.stringify(error, null, 2) + "\n\n\n")
-    console.log(`Encountered '${text}' error`)
+    const timestamp = new Date()
+    const errorLogData = JSON.stringify({ timestamp, config, resp, data }, null, 2) + "\n\n"
+
+    await fs.appendFile(errorFilePath, errorLogData)
+    
+    const errorMessage = data?.error?.message || resp?.statusText || "unknown"
+
+    console.log(`Encountered '${errorMessage}' error`)
     console.log(`View full error log details at ${errorFilePath}`)
 }
-
 
 function consoleSpinner() {
     const characters = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']

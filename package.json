@@ -1,5 +1,5 @@
 {
-  "name": "open-ai-cli",
+  "name": "gpt3-cli",
   "version": "1.0.0",
   "description": "CLI chatbot using openai API",
   "type": "module",
@@ -12,6 +12,9 @@
     "chat-gpt",
     "cli"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "author": "KyleMit",
   "license": "MIT",
   "dependencies": {

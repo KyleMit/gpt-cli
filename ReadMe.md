@@ -53,12 +53,6 @@ gpt <your question here>
 
 Logs are stored to a local `logs.json` file to help you debug info from the response that is not displayed on screen
 
-## Todo
-
-* [ ] Use conversation
-* [ ] Timer for long responses or color spinner
-* [ ] Other commands: `source`, `logs`, `error`
-* [x] node fetch fallback (hopefully zero deps)
 
 ## Prior Art
 

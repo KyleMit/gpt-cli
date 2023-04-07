@@ -1,7 +1,9 @@
 {
   "name": "gpt3-cli",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "CLI chatbot using openai API",
+  "author": "KyleMit",
+  "license": "MIT",
   "type": "module",
   "scripts": {},
   "bin": {
@@ -12,6 +14,8 @@
     "chat-gpt",
     "cli"
   ],
-  "author": "KyleMit",
-  "license": "MIT"
+  "repository": {
+    "url": "https://github.com/KyleMit/gpt-cli",
+    "type": "git"
+  }
 }

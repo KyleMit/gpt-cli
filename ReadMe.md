@@ -30,10 +30,23 @@ gpt config
 gpt <your question here>
 ```
 
+## Examples
+
+![example-fun](assets/example-fun.png)
+
+
+![example-code](assets/example-code.png)
+
+
+## Notes
+
 > **Note**
 > Be careful with apostrophe's in your question, as they'll likely be interpreted to your shell as string delimiters
 
-You'll need to create and enter your own [API Key](https://beta.openai.com/account/api-keys)
+
+
+> **Note**
+> You'll need to create and enter your own [API Key](https://beta.openai.com/account/api-keys)
 
 
 ## Logs

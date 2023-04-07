@@ -5,6 +5,7 @@ import { createInterface } from 'readline';
 import process, { stdin , stdout, platform, argv, versions } from 'process';
 import { promises as fs } from "fs"
 import cp from 'child_process'
+import https from 'https';
 
 import { config } from './config.js'
 
@@ -15,11 +16,6 @@ const __dirname = getDirname()
 main()
 
 async function main() {
-
-    if (parseFloat(versions.node) < 18 ){
-        console.log('Node 18+ required for native fetch.');
-        process.exit(1);
-    }
 
     let apiKey = await getApiKey()
 
@@ -120,14 +116,14 @@ async function sendCompletionRequest(apiKey, config) {
     const spinner = consoleSpinner();
 
     spinner.start()
-    const { resp, data} = await openaiApiCompletions(apiKey, config)
+    const { statusCode, data} = await openaiApiCompletions(apiKey, config)
     spinner.stop()
 
-    if (resp.status != 200) {
-        if (resp.status == 401) {
+    if (statusCode != 200) {
+        if (statusCode == 401) {
             await promptAndSaveKey(true)
         } else {
-            await logFailedRequest(config, resp, data)
+            await logFailedRequest(config, statusCode, data)
         }
         process.exit(1);
     }
@@ -135,24 +131,58 @@ async function sendCompletionRequest(apiKey, config) {
     return data
 }
 
+
 async function openaiApiCompletions(apiKey, config) {
     const url = "https://api.openai.com/v1/completions"
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-    };
-    const method = 'POST';
-    const body = JSON.stringify(config);
 
-    const response = await fetch(url, { headers, method, body })
-
-    const { status, statusText } = response
-    const resp = { status, statusText }
-
-    const data = await response.json();
-
-    return { resp, data}
+    const response = await post(url, config, apiKey);
+    return response
 }
+
+
+function post(url, data, apiKey) {
+    const dataString = JSON.stringify(data)
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': dataString.length,
+            'Authorization': `Bearer ${apiKey}`
+        },
+        timeout: 10 * 1000, // in ms
+    }
+
+    return new Promise((resolve, reject) => {
+        const req = https.request(url, options, (res) => {
+            const statusCode = res.statusCode
+            if (statusCode < 200 || statusCode > 299) {
+                return reject(new Error(`HTTP status code ${statusCode}`))
+            }
+
+            const body = []
+            res.on('data', (chunk) => body.push(chunk))
+            res.on('end', () => {
+                const respString = Buffer.concat(body).toString()
+                const data = JSON.parse(respString)
+                resolve({ statusCode, data })
+            })
+        })
+
+        req.on('error', (err) => {
+            reject(err)
+        })
+
+        req.on('timeout', () => {
+            req.destroy()
+            reject(new Error('Request time out'))
+        })
+
+        req.write(dataString)
+        req.end()
+    })
+}
+
 
 function parseResult(data) {
     const choice = data.choices[0]
@@ -187,14 +217,14 @@ function openConfig() {
     cp.exec(`code ${configFile}`);
 }
 
-async function logFailedRequest(config, resp, data) {
+async function logFailedRequest(config, statusCode, data) {
     const errorFilePath = `${__dirname}/error.txt`
     const timestamp = new Date()
-    const errorLogData = JSON.stringify({ timestamp, config, resp, data }, null, 2) + "\n\n"
+    const errorLogData = JSON.stringify({ timestamp, config, statusCode, data }, null, 2) + "\n\n"
 
     await fs.appendFile(errorFilePath, errorLogData)
     
-    const errorMessage = data?.error?.message || resp?.statusText || "unknown"
+    const errorMessage = data?.error?.message || statusCode || "unknown"
 
     console.log(`Encountered '${errorMessage}' error`)
     console.log(`View full error log details at ${errorFilePath}`)

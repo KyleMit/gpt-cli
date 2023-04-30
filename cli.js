@@ -112,18 +112,18 @@ function platformStartCommand() {
     }
 }
 
-async function sendCompletionRequest(apiKey, config) {
+async function sendCompletionRequest(apiKey, options) {
     const spinner = consoleSpinner();
 
     spinner.start()
-    const { statusCode, data} = await openaiApiCompletions(apiKey, config)
+    const { statusCode, data} = await openaiApiCompletions(apiKey, options)
     spinner.stop()
 
     if (statusCode != 200) {
         if (statusCode == 401) {
             await promptAndSaveKey(true)
         } else {
-            await logFailedRequest(config, statusCode, data)
+            await logFailedRequest(options, statusCode, data)
         }
         process.exit(1);
     }
@@ -132,10 +132,10 @@ async function sendCompletionRequest(apiKey, config) {
 }
 
 
-async function openaiApiCompletions(apiKey, config) {
+async function openaiApiCompletions(apiKey, options) {
     const url = "https://api.openai.com/v1/completions"
 
-    const response = await post(url, config, apiKey);
+    const response = await post(url, options, apiKey);
     return response
 }
 
@@ -217,10 +217,10 @@ function openConfig() {
     cp.exec(`code ${configFile}`);
 }
 
-async function logFailedRequest(config, statusCode, data) {
+async function logFailedRequest(options, statusCode, data) {
     const errorFilePath = `${__dirname}/error.txt`
     const timestamp = new Date()
-    const errorLogData = JSON.stringify({ timestamp, config, statusCode, data }, null, 2) + "\n\n"
+    const errorLogData = JSON.stringify({ timestamp, options, statusCode, data }, null, 2) + "\n\n"
 
     await fs.appendFile(errorFilePath, errorLogData)
     

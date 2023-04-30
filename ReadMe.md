@@ -43,7 +43,7 @@ gpt <your question here>
 > **Note**
 > Be careful with apostrophe's in your question, as they'll likely be interpreted to your shell as string delimiters
 
-
+<br/>
 
 > **Note**
 > You'll need to create and enter your own [API Key](https://beta.openai.com/account/api-keys)

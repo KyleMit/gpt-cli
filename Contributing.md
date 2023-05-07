@@ -17,8 +17,8 @@ npm publish --access public
 
 ## Todo
 
-* [ ] Use conversation
 * [ ] Timer for long responses or color spinner
 * [ ] Other commands: `source`, `logs`, `error`
-* [x] node fetch fallback (hopefully zero deps)
 * [ ] auto publish new version to npm
+* [x] node fetch fallback (hopefully zero deps)
+* [x] Use conversation

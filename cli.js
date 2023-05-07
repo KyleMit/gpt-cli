@@ -39,9 +39,21 @@ async function main() {
         if (!apiKey) { return }
     }
 
+    const pastMessages = await getPastMessages()
+
+    const systemPrompt = { role: "system", content: "You are CLI-GPT. A system that answers user input with helpful and short responses.  You do not need to reference the fact that you are an AI. Only provide answers to the best of your ability." }
+    
+    const currentPrompt = {role:"user", content: prompt}
+
+    const messages = [
+        systemPrompt,
+        ...pastMessages,
+        currentPrompt
+    ]
+
     const options = {
         ...config,
-        prompt,
+        messages
     }
 
     const response = await sendCompletionRequest(apiKey, options);
@@ -51,6 +63,28 @@ async function main() {
     console.log(result)
 
     appendLogData(prompt, response)
+}
+
+async function getPastMessages() {
+    const logPath = `${__dirname}/log.json`
+
+    const curLogs = await getLogData(logPath)
+
+    const recentTimeStamp = new Date()
+    recentTimeStamp.setMinutes(recentTimeStamp.getMinutes() - 5)
+    const recentTimeMs = recentTimeStamp.getTime()
+
+    const recentLogs = curLogs.filter(l => (l.created * 1000) > recentTimeMs)
+
+    const topRecentLogs = recentLogs.slice(-5)
+
+    // https://platform.openai.com/docs/api-reference/chat/create#chat/create-messages
+    const messages = topRecentLogs.flatMap(l => ([
+        { role: "user", content: l.prompt },
+        { role: "assistant", content: l.choices[0].text ?? l.choices[0].message.content }
+    ]))
+
+    return messages
 }
 
 function getDirname() {
@@ -133,7 +167,7 @@ async function sendCompletionRequest(apiKey, options) {
 
 
 async function openaiApiCompletions(apiKey, options) {
-    const url = "https://api.openai.com/v1/completions"
+    const url = "https://api.openai.com/v1/chat/completions"
 
     const response = await post(url, options, apiKey);
     return response
@@ -186,7 +220,7 @@ function post(url, data, apiKey) {
 
 function parseResult(data) {
     const choice = data.choices[0]
-    const response = choice.text
+    const response = choice.message.content
     const suffix = choice.finish_reason == "length" ? "..." : ""
     return response.replace(/^(\?|any|,)/, "").trim() + suffix
 }

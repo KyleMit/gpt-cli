@@ -46,9 +46,9 @@ async function main() {
     const currentPrompt = {role:"user", content: prompt}
 
     const messages = [
-        systemPrompt,
         ...pastMessages,
-        currentPrompt
+        currentPrompt,
+        systemPrompt,
     ]
 
     const options = {

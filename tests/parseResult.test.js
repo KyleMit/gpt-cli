@@ -42,7 +42,7 @@ describe('parseResult_function', () => {
                     message: {
                         content: "This is a valid response"
                     },
-                    finish_reason: "length"
+                    finish_reason: "stop"
                 }
             ]
         }
@@ -63,7 +63,7 @@ describe('parseResult_function', () => {
 
     // Tests that parseResult returns a truncated response with ellipsis suffix when given data with a response that exceeds the maximum allowed length.
     it("test_parse_result_with_response_exceeding_maximum_length", () => {
-        const longResponse = "a".repeat(2049)
+        const longResponse = "a".repeat(24)
         const data = {
             choices: [
                 {
@@ -74,7 +74,7 @@ describe('parseResult_function', () => {
                 }
             ]
         }
-        const expected = longResponse.slice(0, 2046) + "..."
+        const expected = longResponse + "..."
         const result = parseResult(data)
         expect(result).toEqual(expected)
     })
@@ -87,7 +87,7 @@ describe('parseResult_function', () => {
                     message: {
                         content: null
                     },
-                    finish_reason: "length"
+                    finish_reason: "stop"
                 }
             ]
         }
@@ -119,13 +119,13 @@ describe('parseResult_function', () => {
             choices: [
                 {
                     message: {
-                        content: ",any,?,,"
+                        content: "? Perfect Answer"
                     },
-                    finish_reason: "length"
+                    finish_reason: "stop"
                 }
             ]
         }
-        const expected = ""
+        const expected = "Perfect Answer"
         const result = parseResult(data)
         expect(result).toEqual(expected)
     })

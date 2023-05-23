@@ -5,7 +5,9 @@
   "author": "KyleMit",
   "license": "MIT",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
   "bin": {
     "gpt": "./cli.js"
   },

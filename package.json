@@ -17,5 +17,8 @@
   "repository": {
     "url": "https://github.com/KyleMit/gpt-cli",
     "type": "git"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
   }
 }

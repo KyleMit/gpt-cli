@@ -7,6 +7,7 @@ import { promises as fs } from "fs"
 import cp from 'child_process'
 import https from 'https';
 
+import { parseResult } from './utils'
 import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
@@ -218,12 +219,7 @@ function post(url, data, apiKey) {
 }
 
 
-function parseResult(data) {
-    const choice = data.choices[0]
-    const response = choice.message.content
-    const suffix = choice.finish_reason == "length" ? "..." : ""
-    return response.replace(/^(\?|any|,)/, "").trim() + suffix
-}
+
 
 async function appendLogData(prompt, response) {
     const logPath = `${__dirname}/log.json`

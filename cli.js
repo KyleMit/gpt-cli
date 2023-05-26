@@ -2,12 +2,12 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { createInterface } from 'readline';
-import process, { stdin , stdout, platform, argv, versions } from 'process';
+import process, { stdin , stdout, platform, argv } from 'process';
 import { promises as fs } from "fs"
-import cp from 'child_process'
+import { spawn, exec } from 'child_process'
 import https from 'https';
 
-import { parseResult } from './utils'
+import { parseResult } from './utils.js'
 import { config } from './config.js'
 
 const apiKeyName = "OPENAI_API_KEY"
@@ -136,7 +136,7 @@ function createUserPrompt() {
 }
 
 function openUrl(url) {
-    cp.exec(`${platformStartCommand()} ${url}`);
+    exec(`${platformStartCommand()} ${url}`);
 }
 
 function platformStartCommand() {
@@ -243,8 +243,9 @@ async function getLogData(path) {
 }
 
 function openConfig() {
-    const configFile = `${__dirname}/config.js`
-    cp.exec(`code ${configFile}`);
+    const configFile = `${__dirname}\\config.js`
+    const args = [configFile]
+    spawn("code", args, { shell: true });
 }
 
 async function logFailedRequest(options, statusCode, data) {
